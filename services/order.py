@@ -2,37 +2,35 @@ from datetime import datetime
 from django.db import transaction
 from django.db.models import QuerySet
 
-from db.models import Order, Ticket, User
+from db.models import Order, Ticket
+from services.user import get_user_by_username
 
 
+@transaction.atomic
 def create_order(
     tickets: list[dict],
     username: str,
-    date: str = None
+    date: str | None = None
 ) -> Order:
+    user = get_user_by_username(username)
+    order = Order.objects.create(user=user)
 
-    with transaction.atomic():
-        user = User.objects.get(username=username)
+    if date:
+        order.created_at = datetime.fromisoformat(date)
+        order.save(update_fields=["created_at"])
 
-        if date:
-            created_at = datetime.fromisoformat(date)
-        else:
-            created_at = datetime.now()
+    for ticket_data in tickets:
+        Ticket.objects.create(
+            movie_session_id=ticket_data["movie_session"],
+            order=order,
+            row=ticket_data["row"],
+            seat=ticket_data["seat"],
+        )
 
-        order = Order.objects.create(user=user, created_at=created_at)
-
-        for ticket_data in tickets:
-            Ticket.objects.create(
-                movie_session_id=ticket_data["movie_session"],
-                order=order,
-                row=ticket_data["row"],
-                seat=ticket_data["seat"],
-            )
-
-        return order
+    return order
 
 
-def get_orders(username: str = None) -> QuerySet:
+def get_orders(username: str | None = None) -> QuerySet[Order]:
     if username:
         return Order.objects.filter(user__username=username)
     return Order.objects.all()
