@@ -72,7 +72,7 @@ class Order(models.Model):
 
 class Ticket(models.Model):
     movie_session = models.ForeignKey(
-        to=MovieSession,
+        "db.MovieSession",
         on_delete=models.CASCADE,
         related_name="tickets"
     )
@@ -81,16 +81,8 @@ class Ticket(models.Model):
         on_delete=models.CASCADE,
         related_name="tickets"
     )
-    row = models.IntegerField()
-    seat = models.IntegerField()
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["movie_session", "row", "seat"],
-                name="unique_ticket_per_session_row_seat",
-            )
-        ]
+    row = models.PositiveIntegerField()
+    seat = models.PositiveIntegerField()
 
     def __str__(self) -> str:
         return (
@@ -98,6 +90,9 @@ class Ticket(models.Model):
             f"{self.movie_session.show_time} "
             f"(row: {self.row}, seat: {self.seat})"
         )
+
+    class Meta:
+        unique_together = ("movie_session", "row", "seat")
 
     def clean(self) -> None:
         hall = self.movie_session.cinema_hall

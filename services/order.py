@@ -1,7 +1,5 @@
-from datetime import datetime
 from django.db import transaction
 from django.db.models import QuerySet
-
 from db.models import Order, Ticket
 from services.user import get_user_by_username
 
@@ -16,6 +14,7 @@ def create_order(
     order = Order.objects.create(user=user)
 
     if date:
+        from datetime import datetime
         order.created_at = datetime.fromisoformat(date)
         order.save(update_fields=["created_at"])
 

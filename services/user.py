@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db import transaction
 
 User = get_user_model()
 
@@ -10,14 +11,13 @@ def create_user(
     first_name: str | None = None,
     last_name: str | None = None,
 ) -> User:
-    user = User.objects.create_user(
+    return User.objects.create_user(
         username=username,
         password=password,
         email=email or "",
         first_name=first_name or "",
         last_name=last_name or "",
     )
-    return user
 
 
 def get_user(user_id: int) -> User:
@@ -28,6 +28,7 @@ def get_user_by_username(username: str) -> User:
     return User.objects.get(username=username)
 
 
+@transaction.atomic
 def update_user(
     user_id: int,
     username: str | None = None,
